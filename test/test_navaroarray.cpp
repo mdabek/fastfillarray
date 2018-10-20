@@ -110,7 +110,6 @@ TEST_F(NavaroArrayTest, WriteTest)
   for (idx_sh = 0; idx_sh < max_count; idx_sh++)
   {
     EXPECT_EQ(array1[idx_sh], 0XDEAD);
-    std::cout << ", " <<  idx_sh;
     array1.write(idx_sh, 0xBEEB);
     EXPECT_EQ(array1[idx_sh], 0xBEEB);
   }

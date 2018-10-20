@@ -133,6 +133,10 @@ class NavarroArray
     get_position(header_->t_, stack_index, bit);
     get_position(index, arr_index, bit);
 
+    if (index_[arr_index] != stack_index ||
+      stack_[stack_index] != arr_index)
+      initialized_[arr_index] = 0;
+
     index_[arr_index] = stack_index;
     stack_[stack_index] = arr_index;
     initialized_[arr_index] |= (1 << bit);
