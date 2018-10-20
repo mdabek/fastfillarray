@@ -15,7 +15,7 @@ Navarro has been chosen. See [2] for details.
 [1] https://people.seas.harvard.edu/~minilek/publications/papers/fillable.pdf
 [2] https://www.dcc.uchile.cl/~gnavarro/ps/sccc12.pdf
 
-##Implementation
+## Implementation
 
 The implementation is a C++ template. It uses operator[] as a read, but needs to define explicit
 write and init calls.
