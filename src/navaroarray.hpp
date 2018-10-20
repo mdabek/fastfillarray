@@ -23,6 +23,8 @@ SOFTWARE.
 #ifndef NAVARRO_ARRAY_
 #define NAVARRO_ARRAY_
 
+#include <climits> //CHAR_BIT
+
 namespace FFArray
 {
 /// @brief Navarro array implementation
@@ -61,7 +63,8 @@ class NavarroArray
   //@returns number of bytes required for the array
   static size_t GetMemorySize(Index_T count)
   {
-    return count*(sizeof(Data_T) + (2*sizeof(Index_T))) + sizeof(ArrayHeader);
+    //Data + 3*bitfields + header
+    return count*(sizeof(Data_T)) + ((3*count)/(sizeof(Index_T)*CHAR_BIT) + 1) + sizeof(ArrayHeader);
   }
 
   //Remove default constructor
@@ -76,15 +79,18 @@ class NavarroArray
     //Stack - also called S.
     header_ = new(mem_buf) ArrayHeader(init);
 
-    data_count_ = (size - sizeof (ArrayHeader)) / (sizeof(Data_T) + (2*sizeof(Index_T)));
-    index_count_ = data_count_ / 2;
+    //multiplication sizeof(Index_T)*CHAR_BIT, to avoid 3/sizeof(Index_T)*CHAR_BIT
+    const size_t data_count = ((size - sizeof (ArrayHeader) - 1) * sizeof(Index_T)*CHAR_BIT)/
+                              (sizeof(Data_T)*sizeof(Index_T)*CHAR_BIT+3);
 
-    const size_t data_size = data_count_ * sizeof(Data_T);
-    const size_t index_size = index_count_ * sizeof(Index_T);
 
-    data_ = (Data_T*) (header_ + sizeof(ArrayHeader));
-    index_ = (Index_T*) (data_ + data_size);
-    stack_ = (Index_T*) (index_ + index_size);
+    const size_t data_size = data_count * sizeof(Data_T);
+    const size_t index_size = (data_count/CHAR_BIT) + 1;
+
+    data_ = (Data_T*) ((char*)header_ + sizeof(ArrayHeader));
+    initialized_ = (Index_T*) ((char*)data_ + data_size);
+    index_ = (Index_T*) ((char*)initialized_ + index_size);
+    stack_ = (Index_T*) ((char*)index_ + index_size);
   }
 
   //Rule of five - explanation
@@ -121,9 +127,16 @@ class NavarroArray
     }
     else
     {
-    auto stack_index = header_->t_;
-    index_[index] = stack_index;
-    stack_[stack_index] = index;
+    Index_T stack_index;
+    Index_T arr_index, bit;
+
+    get_position(header_->t_, stack_index, bit);
+    get_position(index, arr_index, bit);
+
+    index_[arr_index] = stack_index;
+    stack_[stack_index] = arr_index;
+    initialized_[arr_index] |= (1 << bit);
+
     data_[index] = value;
     header_->t_++;
     }
@@ -146,9 +159,7 @@ class NavarroArray
     header_ = new (header_) ArrayHeader(value);
   }
 
-
   private:
-
   //Forward implementation
   NavarroArray& forward(NavarroArray&& source)
   {
@@ -157,25 +168,33 @@ class NavarroArray
       this->data_ = source.data_;
       this->index_ = source.index_;
       this->stack_ = source.stack_;
-      this->data_count_ = source.data_count_;
-      this->index_count_ = source.index_count_;
 
       source.data_ = nullptr;
       source.index_ = nullptr;
       source.stack_ = nullptr;
-      source.data_count_ = 0;
-      source.index_count_ = 0;
     }
     return *this;
   }
 
   bool is_cell_initialized(const Index_T index) const
   {
-    auto stack_index = index_[index];
+    Index_T arr_index=0, bit=0, stack_limit=0;
+
+    get_position(header_->t_, stack_limit, bit);
+    get_position(index, arr_index, bit);
+
+    auto stack_index = index_[arr_index];
     //If A[i] is intialized:
     //((0 < B[i] < t) && (S[B[i]] == i)
-    return (stack_index >= 0) && (stack_index < header_->t_) &&
-          (stack_[stack_index] == index);
+    return (stack_index >= 0) && (stack_index <= stack_limit) &&
+           (stack_[stack_index] == arr_index) &&
+           (initialized_[arr_index] & (1 << bit));
+  }
+
+  void get_position(const Index_T index, Index_T& arr_index, Index_T& bit) const
+  {
+    arr_index = index / (sizeof(Index_T)*CHAR_BIT);
+    bit = index % (sizeof(Index_T)*CHAR_BIT);
   }
 
   ArrayHeader* header_;
@@ -183,10 +202,9 @@ class NavarroArray
   Data_T*     data_;
 
   Index_T* index_;
+  Index_T* initialized_;
   Index_T* stack_;
 
-  size_t  data_count_;
-  size_t  index_count_;
 };
 
 }

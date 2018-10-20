@@ -36,31 +36,35 @@ protected:
     uint8_t* mem_buffer_;
 };
 
+#define CALC_TAB_SIZE(elements, data_type, index_type)\
+  ((elements) * sizeof(data_type) + (3 * elements) / (sizeof(index_type) * 8) + \
+     sizeof(FFArray::NavarroArray<data_type, index_type>::ArrayHeader) + 1)
+
 TEST_F(NavaroArrayTest, SizeTest)
 {
   auto proposed_size = FFArray::NavarroArray<uint64_t>::GetMemorySize(1024);
-  EXPECT_EQ(proposed_size, 16400);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(1024, uint64_t, unsigned int));
 
   proposed_size = FFArray::NavarroArray<uint64_t>::GetMemorySize(512);
-  EXPECT_EQ(proposed_size, 8208);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(512, uint64_t, unsigned int));
 
   proposed_size = FFArray::NavarroArray<uint8_t>::GetMemorySize(1024);
-  EXPECT_EQ(proposed_size, 9224);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(1024, uint8_t, unsigned int));
 
   proposed_size = FFArray::NavarroArray<uint8_t>::GetMemorySize(512);
-  EXPECT_EQ(proposed_size, 4616);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(512, uint8_t, unsigned int));
 
   proposed_size = FFArray::NavarroArray<uint64_t, uint16_t>::GetMemorySize(1024);
-  EXPECT_EQ(proposed_size, 12304);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(1024, uint64_t, uint16_t));
 
   proposed_size = FFArray::NavarroArray<uint64_t, uint16_t>::GetMemorySize(512);
-  EXPECT_EQ(proposed_size, 6160);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(512, uint64_t, uint16_t));
 
   proposed_size = FFArray::NavarroArray<uint8_t, uint16_t>::GetMemorySize(1024);
-  EXPECT_EQ(proposed_size, 5124);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(1024, uint8_t, uint16_t));
 
   proposed_size = FFArray::NavarroArray<uint8_t, uint16_t>::GetMemorySize(512);
-  EXPECT_EQ(proposed_size, 2564);
+  EXPECT_EQ(proposed_size, CALC_TAB_SIZE(512, uint8_t, uint16_t));
 }
 
 TEST_F(NavaroArrayTest, InitTest)
@@ -106,9 +110,11 @@ TEST_F(NavaroArrayTest, WriteTest)
   for (idx_sh = 0; idx_sh < max_count; idx_sh++)
   {
     EXPECT_EQ(array1[idx_sh], 0XDEAD);
+    std::cout << ", " <<  idx_sh;
     array1.write(idx_sh, 0xBEEB);
     EXPECT_EQ(array1[idx_sh], 0xBEEB);
   }
+  std::cout << std::endl;
 }
 
 int main(int argc, char** argv)
