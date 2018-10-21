@@ -109,6 +109,7 @@ TEST_F(NavaroArrayTest, WriteTest)
     array1.write(idx_sh, 0xBEEB);
     EXPECT_EQ(array1[idx_sh], 0xBEEB);
   }
+  std::cout << std::endl;
 }
 
 int main(int argc, char** argv)
