@@ -36,7 +36,7 @@ namespace FFArray
 
  Necesary memory region size can be obtained by calling a static method GetMemorySize.
 */
-template <class Data_T, typename Index_T = unsigned int>
+template <class Data_T, typename Index_T = uint32_t>
 class NavarroArray
 {
   public:
