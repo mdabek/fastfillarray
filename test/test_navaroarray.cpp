@@ -34,7 +34,7 @@ protected:
   }
 
   // Objects declared here can be used by all tests in the test case
-  const size_t buffer_size_ = FFArray::NavarroArray<uint64_t>::GetMemorySize(102400);
+  const size_t buffer_size_ = FFArray::NavarroArray<uint64_t>::GetMemorySize(120000000);
   uint8_t* mem_buffer_;
 };
 
@@ -119,31 +119,39 @@ TEST_F(NavaroArrayTest, WriteTest)
 
 TEST_F(NavaroArrayTest, RandomWriteTest)
 {
-  unsigned int max_count = 90000;
-  unsigned int rand_count = 10000;
+  unsigned int max_count = 10000000;
+  unsigned int rand_count = 100000;
 
   std::default_random_engine generator;
   std::uniform_int_distribution<int> distribution(1,rand_count);
 
-  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+  //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
   auto max_size = FFArray::NavarroArray<uint64_t>::GetMemorySize(max_count);
   auto array = FFArray::NavarroArray<uint64_t>{mem_buffer_, max_size, 0xDEADBEEF};
+  std::vector<unsigned int> rand_ind;
 
   for (unsigned int count = 0; count < rand_count; count++)
   {
-    int arr_idx = distribution(generator);  // generates number in the range 1..6
+    int arr_idx = distribution(generator);
+
+    auto ind = std::find(rand_ind.begin(), rand_ind.end(), arr_idx);
+    if (ind != rand_ind.end())
+      continue;
+
+    rand_ind.push_back(arr_idx);
+
     EXPECT_EQ(array[arr_idx], 0XDEADBEEF);
     array.write(arr_idx, 0xFEED);
     EXPECT_EQ(array[arr_idx], 0XFEED);
   }
 
-  std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+  /*std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> time_span =
-    std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+  std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
   std::cout << "It took me " << time_span.count() << " seconds.";
-  std::cout << std::endl;
+  std::cout << std::endl;*/
 }
 
 int main(int argc, char** argv)
