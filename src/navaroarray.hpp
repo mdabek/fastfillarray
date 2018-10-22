@@ -82,9 +82,9 @@ class NavarroArray
     const size_t data_size = data_count_ * sizeof(Data_T);
     const size_t index_size = index_count_ * sizeof(Index_T);
 
-    data_ = (Data_T*) (header_ + sizeof(ArrayHeader));
-    index_ = (Index_T*) (data_ + data_size);
-    stack_ = (Index_T*) (index_ + index_size);
+    data_ = (Data_T*) ((char*)header_ + sizeof(ArrayHeader));
+    index_ = (Index_T*) ((char*)data_ + data_size);
+    stack_ = (Index_T*) ((char*)index_ + index_size);
   }
 
   //Rule of five - explanation
